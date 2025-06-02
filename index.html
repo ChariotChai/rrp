@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>监管报送系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind 配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#165DFF',
+            success: '#36D399',
+            warning: '#FFAB00',
+            danger: '#F87272',
+            dark: '#1E293B',
+            light: '#F8FAFC'
+          },
+          fontFamily: {
+            inter: ['Inter', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .transition-height {
+        transition: max-height 0.3s ease-in-out;
+      }
+      .node-active {
+        @apply ring-2 ring-primary ring-offset-2;
+      }
+      .node-waiting {
+        @apply ring-2 ring-warning ring-offset-2;
+      }
+      .node-success {
+        @apply ring-2 ring-success ring-offset-2;
+      }
+      .node-failed {
+        @apply ring-2 ring-danger ring-offset-2;
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <i class="fa fa-shield text-primary text-2xl mr-2"></i>
+            <span class="font-bold text-xl">监管报送系统</span>
+          </div>
+          <nav class="hidden md:ml-6 md:flex space-x-4">
+            <a href="#dashboard" class="text-primary border-b-2 border-primary px-3 py-2 text-sm font-medium">首页</a>
+            <a href="#processes" class="text-gray-500 hover:text-primary px-3 py-2 text-sm font-medium">业务流程</a>
+            <a href="#schemas" class="text-gray-500 hover:text-primary px-3 py-2 text-sm font-medium">Schema管理</a>
+            <a href="#history" class="text-gray-500 hover:text-primary px-3 py-2 text-sm font-medium">历史记录</a>
+            <a href="#insight" class="text-gray-500 hover:text-primary px-3 py-2 text-sm font-medium">数据分析</a>
+          </nav>
+        </div>
+        <div class="flex items-center">
+          <div class="relative mr-4">
+            <button class="p-1 rounded-full text-gray-500 hover:text-primary focus:outline-none">
+              <i class="fa fa-bell-o text-lg"></i>
+              <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-danger"></span>
+            </button>
+          </div>
+          <div class="ml-3 relative">
+            <div>
+              <button class="flex items-center max-w-xs rounded-full focus:outline-none">
+                <img class="h-8 w-8 rounded-full object-cover" src="https://picsum.photos/200/200?random=1" alt="用户头像">
+                <span class="ml-2 text-sm font-medium text-gray-700 hidden md:block">管理员</span>
+                <i class="fa fa-angle-down ml-1 text-gray-500 hidden md:block"></i>
+              </button>
+            </div>
+          </div>
+          <button class="md:hidden ml-4 text-gray-500 hover:text-primary focus:outline-none">
+            <i class="fa fa-bars text-xl"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="flex-grow flex">
+    <!-- 侧边栏 -->
+    <aside class="hidden lg:block w-64 bg-white shadow-sm h-[calc(100vh-4rem)] sticky top-16">
+      <nav class="px-4 py-6">
+        <div class="space-y-1">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">主功能</p>
+          <a href="#dashboard" class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-primary bg-blue-50">
+            <i class="fa fa-dashboard mr-3 text-primary"></i>
+            系统概览
+          </a>
+          <a href="#processes" class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary">
+            <i class="fa fa-sitemap mr-3 text-gray-400 group-hover:text-primary"></i>
+            业务流程
+          </a>
+          <a href="#schemas" class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary">
+            <i class="fa fa-th-large mr-3 text-gray-400 group-hover:text-primary"></i>
+            Schema管理
+          </a>
+          <a href="#monitor" class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary">
+            <i class="fa fa-eye mr-3 text-gray-400 group-hover:text-primary"></i>
+            流程监控
+          </a>
+          <a href="#settings" class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary">
+            <i class="fa fa-cog mr-3 text-gray-400 group-hover:text-primary"></i>
+            系统设置
+          </a>
+        </div>
+        
+        <div class="mt-8 space-y-1">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">数据中心</p>
+          <a href="#history" class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary">
+            <i class="fa fa-history mr-3 text-gray-400 group-hover:text-primary"></i>
+            历史记录
+          </a>
+          <a href="#insight" class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary">
+            <i class="fa fa-bar-chart mr-3 text-gray-400 group-hover:text-primary"></i>
+            数据分析
+          </a>
+          <a href="#reports" class="group flex items-center px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-primary">
+            <i class="fa fa-file-text-o mr-3 text-gray-400 group-hover:text-primary"></i>
+            报送内容
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- 内容区域 -->
+    <div class="flex-1 p-4 lg:p-6 overflow-auto">
+      <!-- 概览仪表盘 -->
+      <section id="dashboard" class="space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-900">监管报送系统</h1>
+            <p class="mt-1 text-gray-600">管理、监控和分析监管报送业务流程</p>
+          </div>
+          <div class="mt-4 md:mt-0">
+            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150 ease-in-out">
+              <i class="fa fa-plus mr-2"></i>
+              新建报送业务
+            </button>
+          </div>
+        </div>
+
+        <!-- 统计卡片 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center">
+              <div class="flex-shrink-0 bg-blue-100 p-3 rounded-md">
+                <i class="fa fa-cubes text-primary text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">业务总数</p>
+                <p class="text-2xl font-bold text-gray-900">12</p>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center">
+              <p class="text-sm text-green-600 flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i>
+                <span>2 个新增 (本周)</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center">
+              <div class="flex-shrink-0 bg-green-100 p-3 rounded-md">
+                <i class="fa fa-check-circle text-success text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">成功报送</p>
+                <p class="text-2xl font-bold text-gray-900">86%</p>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center">
+              <p class="text-sm text-green-600 flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i>
+                <span>5% 提升 (本月)</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center">
+              <div class="flex-shrink-0 bg-yellow-100 p-3 rounded-md">
+                <i class="fa fa-clock-o text-warning text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">待处理</p>
+                <p class="text-2xl font-bold text-gray-900">5</p>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center">
+              <p class="text-sm text-yellow-600 flex items-center">
+                <i class="fa fa-exclamation-circle mr-1"></i>
+                <span>3 个超时</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center">
+              <div class="flex-shrink-0 bg-red-100 p-3 rounded-md">
+                <i class="fa fa-exclamation-triangle text-danger text-xl"></i>
+              </div>
+              <div class="ml-4">
+                <p class="text-sm font-medium text-gray-500">失败次数</p>
+                <p class="text-2xl font-bold text-gray-900">3</p>
+              </div>
+            </div>
+            <div class="mt-4 flex items-center">
+              <p class="text-sm text-red-600 flex items-center">
+                <i class="fa fa-arrow-down mr-1"></i>
+                <span>2 次减少 (本月)</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 图表和业务列表 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-gray-900">报送趋势</h2>
+              <div class="flex space-x-2">
+                <button class="px-3 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200">日</button>
+                <button class="px-3 py-1 text-xs font-medium text-white bg-primary rounded-md">周</button>
+                <button class="px-3 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200">月</button>
+              </div>
+            </div>
+            <div class="h-80">
+              <canvas id="reportTrendChart"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-gray-900">业务状态分布</h2>
+              <button class="text-primary text-sm hover:text-primary/80">查看全部</button>
+            </div>
+            <div class="h-80">
+              <canvas id="processStatusChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- 最近业务流程 -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">最近业务流程</h2>
+            <button class="text-primary text-sm hover:text-primary/80">查看全部</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务名称</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最近执行</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">耗时</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fa fa-bank text-primary"></i>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">银行业务季度报表</div>
+                        <div class="text-xs text-gray-500">Q2 2025</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      已完成
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-30 09:30</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5分12秒</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#process-detail" class="text-primary hover:text-primary/80 mr-3">详情</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">重新执行</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <i class="fa fa-credit-card text-warning"></i>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">信用卡风险评估月报</div>
+                        <div class="text-xs text-gray-500">May 2025</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                      处理中
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-06-01 14:15</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3分47秒</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#process-detail" class="text-primary hover:text-primary/80 mr-3">详情</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">暂停</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <i class="fa fa-line-chart text-danger"></i>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">证券交易日报</div>
+                        <div class="text-xs text-gray-500">June 01, 2025</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                      失败
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-06-01 18:45</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1分22秒</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#process-detail" class="text-primary hover:text-primary/80 mr-3">详情</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">重试</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fa fa-exchange text-primary"></i>
+                      </div>
+                      <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">外汇交易周报</div>
+                        <div class="text-xs text-gray-500">Week 22, 2025</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                      待执行
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-06-05 08:00</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">--</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#process-detail" class="text-primary hover:text-primary/80 mr-3">详情</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">立即执行</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 业务流程设计器 -->
+      <section id="processes" class="space-y-6 hidden">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">业务流程管理</h1>
+            <p class="mt-1 text-gray-600">创建、编辑和管理监管报送业务流程</p>
+          </div>
+          <div class="mt-4 md:mt-0">
+            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150 ease-in-out">
+              <i class="fa fa-plus mr-2"></i>
+              新建流程
+            </button>
+          </div>
+        </div>
+
+        <!-- 流程设计器 -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <div class="flex flex-col lg:flex-row gap-6">
+            <!-- 左侧工具栏 -->
+            <div class="lg:w-64 space-y-4">
+              <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">流程节点</h3>
+                <div class="space-y-2">
+                  <div class="p-2 bg-white rounded-md border border-gray-200 cursor-move hover:bg-gray-50 flex items-center">
+                    <i class="fa fa-cog text-primary mr-2"></i>
+                    <span class="text-sm">自动节点</span>
+                  </div>
+                  <div class="p-2 bg-white rounded-md border border-gray-200 cursor-move hover:bg-gray-50 flex items-center">
+                    <i class="fa fa-user text-primary mr-2"></i>
+                    <span class="text-sm">用户输入节点</span>
+                  </div>
+                  <div class="p-2 bg-white rounded-md border border-gray-200 cursor-move hover:bg-gray-50 flex items-center">
+                    <i class="fa fa-exchange text-primary mr-2"></i>
+                    <span class="text-sm">外部系统等待节点</span>
+                  </div>
+                  <div class="p-2 bg-white rounded-md border border-gray-200 cursor-move hover:bg-gray-50 flex items-center node-active">
+                    <i class="fa fa-database text-primary mr-2"></i>
+                    <span class="text-sm">数据采集节点</span>
+                  </div>
+                  <div class="p-2 bg-white rounded-md border border-gray-200 cursor-move hover:bg-gray-50 flex items-center">
+                    <i class="fa fa-table text-primary mr-2"></i>
+                    <span class="text-sm">数据查看节点</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">流程设置</h3>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">触发方式</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">
+                      <option>定时触发</option>
+                      <option>手动触发</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">执行周期</label>
+                    <div class="flex items-center">
+                      <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm" placeholder="Cron 表达式">
+                      <button class="ml-2 text-gray-500 hover:text-primary">
+                        <i class="fa fa-calendar"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">关联Schema</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">
+                      <option>bank_quarterly_report_v1</option>
+                      <option>credit_card_risk_monthly_v2</option>
+                      <option>securities_daily_report_v1</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 中间流程设计区 -->
+            <div class="flex-1 bg-gray-50 rounded-lg border border-gray-200 p-4 min-h-[500px] overflow-auto">
+              <div class="text-center mb-4">
+                <h3 class="text-sm font-medium text-gray-700">银行业务季度报表流程</h3>
+                <p class="text-xs text-gray-500">Q2 2025</p>
+              </div>
+              
+              <!-- 流程图 -->
+              <div class="flex flex-col items-center space-y-12 relative">
+                <!-- 连接线 -->
+                <div class="absolute left-1/2 top-0 bottom-0 w-px bg-gray-200 transform -translate-x-1/2 z-0"></div>
+                
+                <!-- 节点1 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 w-full max-w-md mx-auto relative z-10 node-success">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                        <i class="fa fa-play text-success"></i>
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-900">开始</h4>
+                        <p class="text-xs text-gray-500">流程启动节点</p>
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-500">09:30:00</div>
+                  </div>
+                </div>
+                
+                <!-- 节点2 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 w-full max-w-md mx-auto relative z-10 node-success">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                        <i class="fa fa-database text-primary"></i>
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-900">数据采集</h4>
+                        <p class="text-xs text-gray-500">执行SQL查询，获取业务数据</p>
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-500">09:30:15</div>
+                  </div>
+                  <div class="mt-3 bg-gray-50 p-3 rounded-md">
+                    <p class="text-xs text-gray-700 mb-2">SQL查询:</p>
+                    <pre class="text-xs font-mono text-gray-800 bg-gray-100 p-2 rounded overflow-x-auto">SELECT * FROM transactions WHERE transaction_date >= '2025-03-01' AND transaction_date <= '2025-05-31';</pre>
+                  </div>
+                </div>
+                
+                <!-- 节点3 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 w-full max-w-md mx-auto relative z-10 node-success">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
+                        <i class="fa fa-check-square-o text-purple-600"></i>
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-900">数据校验</h4>
+                        <p class="text-xs text-gray-500">验证数据是否符合Schema</p>
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-500">09:32:45</div>
+                  </div>
+                  <div class="mt-3 bg-gray-50 p-3 rounded-md">
+                    <div class="flex items-center text-xs">
+                      <i class="fa fa-check-circle text-success mr-1"></i>
+                      <span class="text-green-600">校验通过: 125条记录，符合 bank_quarterly_report_v1 格式</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 节点4 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 w-full max-w-md mx-auto relative z-10 node-active">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="h-8 w-8 rounded-full bg-yellow-100 flex items-center justify-center mr-3">
+                        <i class="fa fa-user text-warning"></i>
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-900">人工审核</h4>
+                        <p class="text-xs text-gray-500">等待用户确认数据</p>
+                      </div>
+                    </div>
+                    <div class="text-xs text-yellow-600">等待中</div>
+                  </div>
+                  <div class="mt-3 bg-gray-50 p-3 rounded-md">
+                    <div class="text-xs text-gray-700 mb-2">审核说明:</div>
+                    <p class="text-xs text-gray-600">请确认季度交易数据是否完整，无异常值</p>
+                    <div class="mt-2 flex space-x-2">
+                      <button class="px-3 py-1 text-xs font-medium text-white bg-success rounded-md hover:bg-success/90">
+                        通过
+                      </button>
+                      <button class="px-3 py-1 text-xs font-medium text-white bg-danger rounded-md hover:bg-danger/90">
+                        驳回
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- 节点5 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 w-full max-w-md mx-auto relative z-10 opacity-50">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+                        <i class="fa fa-paper-plane text-gray-400"></i>
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-500">监管报送</h4>
+                        <p class="text-xs text-gray-500">向银保监会报送季度数据</p>
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-500">未执行</div>
+                  </div>
+                </div>
+                
+                <!-- 节点6 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 w-full max-w-md mx-auto relative z-10 opacity-50">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+                        <i class="fa fa-file-text-o text-gray-400"></i>
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-500">记录归档</h4>
+                        <p class="text-xs text-gray-500">保存报送记录和结果</p>
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-500">未执行</div>
+                  </div>
+                </div>
+                
+                <!-- 节点7 -->
+                <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 w-full max-w-md mx-auto relative z-10 opacity-50">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+                        <i class="fa fa-stop text-gray-400"></i>
+                      </div>
+                      <div>
+                        <h4 class="text-sm font-medium text-gray-500">结束</h4>
+                        <p class="text-xs text-gray-500">流程完成</p>
+                      </div>
+                    </div>
+                    <div class="text-xs text-gray-500">未执行</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧属性面板 -->
+            <div class="lg:w-80 space-y-4">
+              <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">节点属性</h3>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">节点名称</label>
+                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm" value="数据采集节点">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">节点类型</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">
+                      <option>数据采集节点</option>
+                      <option>自动节点</option>
+                      <option>用户输入节点</option>
+                      <option>外部系统等待节点</option>
+                      <option>数据查看节点</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">SQL查询</label>
+                    <textarea rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">SELECT * FROM transactions 
+WHERE transaction_date >= '2025-03-01' 
+AND transaction_date <= '2025-05-31' 
+AND amount > 1000;</textarea>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">关联Schema</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">
+                      <option>bank_quarterly_report_v1</option>
+                      <option>credit_card_risk_monthly_v2</option>
+                      <option>securities_daily_report_v1</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">执行超时设置</label>
+                    <div class="flex items-center">
+                      <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm" value="300">
+                      <span class="ml-2 text-sm text-gray-500">秒</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">执行历史</h3>
+                <div class="space-y-3">
+                  <div class="flex items-center p-2 bg-gray-50 rounded-md">
+                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center mr-2">
+                      <i class="fa fa-check text-success text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-gray-900">2025-05-30 09:30:15</p>
+                      <p class="text-xs text-gray-500">执行成功，耗时15秒</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center p-2 bg-gray-50 rounded-md">
+                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-green-100 flex items-center justify-center mr-2">
+                      <i class="fa fa-check text-success text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-gray-900">2025-02-28 09:45:22</p>
+                      <p class="text-xs text-gray-500">执行成功，耗时22秒</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center p-2 bg-gray-50 rounded-md">
+                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-red-100 flex items-center justify-center mr-2">
+                      <i class="fa fa-times text-danger text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-gray-900">2025-02-01 10:15:30</p>
+                      <p class="text-xs text-gray-500">执行失败：SQL语法错误</p>
+                    </div>
+                  </div>
+                </div>
+                <button class="mt-2 text-xs text-primary hover:text-primary/80 w-full text-center">
+                  查看全部历史
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Schema管理 -->
+      <section id="schemas" class="space-y-6 hidden">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Schema管理</h1>
+            <p class="mt-1 text-gray-600">定义和管理监管报送数据格式</p>
+          </div>
+          <div class="mt-4 md:mt-0">
+            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150 ease-in-out">
+              <i class="fa fa-plus mr-2"></i>
+              新建Schema
+            </button>
+          </div>
+        </div>
+
+        <!-- Schema列表 -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <div class="flex items-center">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fa fa-search text-gray-400"></i>
+                </div>
+                <input type="text" class="focus:ring-primary focus:border-primary block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="搜索Schema...">
+              </div>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center space-x-2">
+              <div class="relative">
+                <select class="block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary focus:border-primary rounded-md bg-white">
+                  <option>全部类型</option>
+                  <option>季度报表</option>
+                  <option>月度报表</option>
+                  <option>日报表</option>
+                  <option>实时数据</option>
+                </select>
+              </div>
+              <button class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                <i class="fa fa-filter mr-1"></i> 筛选
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名称</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">版本</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">关联业务</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-md flex items-center justify-center">
+                        <i class="fa fa-file-code-o text-primary"></i>
+                      </div>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">bank_quarterly_report</div>
+                        <div class="text-xs text-gray-500">银行业务季度报表</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-900">v1.2</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                      季度报表
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    3个
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    2025-01-15
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#schema-detail" class="text-primary hover:text-primary/80 mr-3">查看</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 mr-3">编辑</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">版本历史</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 bg-purple-100 rounded-md flex items-center justify-center">
+                        <i class="fa fa-file-code-o text-purple-600"></i>
+                      </div>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">credit_card_risk_monthly</div>
+                        <div class="text-xs text-gray-500">信用卡风险评估月报</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-900">v2.0</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                      月度报表
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    5个
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    2025-03-20
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#schema-detail" class="text-primary hover:text-primary/80 mr-3">查看</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 mr-3">编辑</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">版本历史</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 bg-red-100 rounded-md flex items-center justify-center">
+                        <i class="fa fa-file-code-o text-red-600"></i>
+                      </div>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">securities_daily_report</div>
+                        <div class="text-xs text-gray-500">证券交易日报</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-900">v1.0</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                      日报表
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    2个
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    2025-04-05
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#schema-detail" class="text-primary hover:text-primary/80 mr-3">查看</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 mr-3">编辑</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">版本历史</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 bg-green-100 rounded-md flex items-center justify-center">
+                        <i class="fa fa-file-code-o text-green-600"></i>
+                      </div>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">fx_trading_weekly</div>
+                        <div class="text-xs text-gray-500">外汇交易周报</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="text-sm text-gray-900">v1.1</span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      周报
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    1个
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    2025-05-10
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#schema-detail" class="text-primary hover:text-primary/80 mr-3">查看</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 mr-3">编辑</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">版本历史</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+              <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                上一页
+              </a>
+              <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                下一页
+              </a>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm text-gray-700">
+                  显示 <span class="font-medium">1</span> 到 <span class="font-medium">4</span> 条，共 <span class="font-medium">12</span> 条记录
+                </p>
+              </div>
+              <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">上一页</span>
+                    <i class="fa fa-chevron-left text-xs"></i>
+                  </a>
+                  <a href="#" aria-current="page" class="z-10 bg-primary border-primary text-white relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                    1
+                  </a>
+                  <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                    2
+                  </a>
+                  <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                    3
+                  </a>
+                  <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                    ...
+                  </span>
+                  <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                    12
+                  </a>
+                  <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">下一页</span>
+                    <i class="fa fa-chevron-right text-xs"></i>
+                  </a>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schema编辑器 -->
+        <div id="schema-detail" class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hidden">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">bank_quarterly_report</h2>
+              <p class="mt-1 text-sm text-gray-500">银行业务季度报表 - v1.2</p>
+            </div>
+            <div class="flex space-x-3">
+              <button class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                <i class="fa fa-history mr-2"></i>
+                版本历史
+              </button>
+              <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                <i class="fa fa-save mr-2"></i>
+                保存
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2">
+              <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-sm font-semibold text-gray-700">Schema定义</h3>
+                  <div class="flex space-x-2">
+                    <button class="text-xs text-gray-500 hover:text-primary">
+                      <i class="fa fa-copy"></i> 复制
+                    </button>
+                    <button class="text-xs text-gray-500 hover:text-primary">
+                      <i class="fa fa-download"></i> 下载
+                    </button>
+                  </div>
+                </div>
+                <pre class="text-xs font-mono text-gray-800 bg-gray-100 p-4 rounded overflow-x-auto h-[400px]">
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "银行业务季度报表",
+  "type": "object",
+  "properties": {
+    "report_info": {
+      "type": "object",
+      "description": "报表基本信息",
+      "properties": {
+        "report_id": {
+          "type": "string",
+          "description": "报表ID",
+          "pattern": "^RPT-\\d{4}-Q\\d$"
+        },
+        "report_date": {
+          "type": "string",
+          "description": "报表日期",
+          "format": "date"
+        },
+        "quarter": {
+          "type": "integer",
+          "description": "季度",
+          "minimum": 1,
+          "maximum": 4
+        },
+        "year": {
+          "type": "integer",
+          "description": "年份",
+          "minimum": 2000,
+          "maximum": 2100
+        },
+        "bank_info": {
+          "type": "object",
+          "description": "银行信息",
+          "properties": {
+            "bank_code": {
+              "type": "string",
+              "description": "银行代码",
+              "minLength": 4,
+              "maxLength": 10
+            },
+            "bank_name": {
+              "type": "string",
+              "description": "银行名称",
+              "minLength": 2
+            },
+            "contact_person": {
+              "type": "string",
+              "description": "联系人"
+            },
+            "contact_phone": {
+              "type": "string",
+              "description": "联系电话",
+              "pattern": "^\\d{10,15}$"
+            }
+          },
+          "required": ["bank_code", "bank_name"]
+        }
+      },
+      "required": ["report_id", "report_date", "quarter", "year", "bank_info"]
+    },
+    "financial_data": {
+      "type": "object",
+      "description": "财务数据",
+      "properties": {
+        "total_assets": {
+          "type": "number",
+          "description": "总资产",
+          "minimum": 0
+        },
+        "total_liabilities": {
+          "type": "number",
+          "description": "总负债",
+          "minimum": 0
+        },
+        "total_equity": {
+          "type": "number",
+          "description": "总权益",
+          "minimum": 0
+        },
+        "net_income": {
+          "type": "number",
+          "description": "净利润",
+          "minimum": 0
+        },
+        "loan_assets": {
+          "type": "number",
+          "description": "贷款资产",
+          "minimum": 0
+        },
+        "non_performing_loans": {
+          "type": "number",
+          "description": "不良贷款",
+          "minimum": 0
+        },
+        "npl_ratio": {
+          "type": "number",
+          "description": "不良贷款率",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": ["total_assets", "total_liabilities", "total_equity", "net_income"]
+    },
+    "transaction_data": {
+      "type": "array",
+      "description": "交易数据",
+      "items": {
+        "type": "object",
+        "properties": {
+          "transaction_id": {
+            "type": "string",
+            "description": "交易ID"
+          },
+          "transaction_date": {
+            "type": "string",
+            "description": "交易日期",
+            "format": "date"
+          },
+          "transaction_type": {
+            "type": "string",
+            "description": "交易类型",
+            "enum": ["存款", "贷款", "理财", "信用卡", "其他"]
+          },
+          "amount": {
+            "type": "number",
+            "description": "交易金额",
+            "minimum": 0
+          },
+          "customer_id": {
+            "type": "string",
+            "description": "客户ID"
+          },
+          "customer_type": {
+            "type": "string",
+            "description": "客户类型",
+            "enum": ["个人", "企业", "政府", "金融机构"]
+          }
+        },
+        "required": ["transaction_id", "transaction_date", "transaction_type", "amount"]
+      },
+      "minItems": 1
+    }
+  },
+  "required": ["report_info", "financial_data", "transaction_data"]
+}
+                </pre>
+              </div>
+            </div>
+            <div>
+              <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">基本信息</h3>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">名称</label>
+                    <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm" value="bank_quarterly_report">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">描述</label>
+                    <textarea rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">银行业务季度报表，用于向银保监会报送季度财务数据和交易信息</textarea>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">报表类型</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">
+                      <option>季度报表</option>
+                      <option>月度报表</option>
+                      <option>日报表</option>
+                      <option>实时数据</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">监管机构</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">
+                      <option>银保监会</option>
+                      <option>证监会</option>
+                      <option>央行</option>
+                      <option>外汇管理局</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">报送频率</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">
+                      <option>季度</option>
+                      <option>月度</option>
+                      <option>每周</option>
+                      <option>每日</option>
+                      <option>实时</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">关联业务</h3>
+                <div class="space-y-2 max-h-[200px] overflow-y-auto">
+                  <div class="flex items-center p-2 bg-gray-50 rounded-md">
+                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                      <i class="fa fa-cubes text-primary text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-gray-900">银行业务季度报表 - Q2 2025</p>
+                      <p class="text-xs text-gray-500">最近执行: 2025-05-30</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center p-2 bg-gray-50 rounded-md">
+                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                      <i class="fa fa-cubes text-primary text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-gray-900">银行业务季度报表 - Q1 2025</p>
+                      <p class="text-xs text-gray-500">最近执行: 2025-02-28</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center p-2 bg-gray-50 rounded-md">
+                    <div class="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 flex items-center justify-center mr-2">
+                      <i class="fa fa-cubes text-primary text-xs"></i>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-xs font-medium text-gray-900">银行业务季度报表 - Q4 2024</p>
+                      <p class="text-xs text-gray-500">最近执行: 2024-11-30</p>
+                    </div>
+                  </div>
+                </div>
+                <button class="mt-2 text-xs text-primary hover:text-primary/80 w-full text-center">
+                  查看全部关联业务
+                </button>
+              </div>
+
+              <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">验证示例</h3>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">示例数据</label>
+                    <textarea rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary text-sm">
+{
+  "report_info": {
+    "report_id": "RPT-2025-Q2",
+    "report_date": "2025-06-01",
+    "quarter": 2,
+    "year": 2025,
+    "bank_info": {
+      "bank_code": "BOC001",
+      "bank_name": "中国银行",
+      "contact_person": "张三",
+      "contact_phone": "13800138000"
+    }
+  },
+  "financial_data": {
+    "total_assets": 123456789000,
+    "total_liabilities": 110000000000,
+    "total_equity": 13456789000,
+    "net_income": 5000000000
+  },
+  "transaction_data": [
+    {
+      "transaction_id": "TRX-20250401-001",
+      "transaction_date": "2025-04-01",
+      "transaction_type": "存款",
+      "amount": 1000000,
+      "customer_id": "CUST-0001",
+      "customer_type": "企业"
+    }
+  ]
+}
+}
+                    </textarea>
+                  </div>
+                  <button class="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                    <i class="fa fa-check mr-2"></i>
+                    验证数据
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 数据查看节点 -->
+      <section id="data-view" class="space-y-6 hidden">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">数据查看</h1>
+            <p class="mt-1 text-gray-600">查看业务流程执行结果数据</p>
+          </div>
+          <div class="mt-4 md:mt-0 flex space-x-3">
+            <button class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+              <i class="fa fa-download mr-2"></i>
+              导出数据
+            </button>
+            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+              <i class="fa fa-refresh mr-2"></i>
+              刷新
+            </button>
+          </div>
+        </div>
+
+        <!-- 数据查看器 -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <div class="flex flex-col lg:flex-row gap-6">
+            <!-- 左侧数据表格 -->
+            <div class="lg:w-2/3">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-semibold text-gray-700">交易数据</h3>
+                <div class="flex items-center space-x-2">
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <i class="fa fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" class="focus:ring-primary focus:border-primary block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="搜索...">
+                  </div>
+                  <button class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                    <i class="fa fa-filter mr-1"></i> 筛选
+                  </button>
+                </div>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">交易ID</th>
+                      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">交易日期</th>
+                      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">交易类型</th>
+                      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">金额</th>
+                      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">客户ID</th>
+                      <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TRX-20250401-001</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-04-01</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          存款
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1,000,000.00</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">CUST-0001</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="#" class="text-primary hover:text-primary/80">详情</a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TRX-20250402-002</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-04-02</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          贷款
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">5,000,000.00</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">CUST-0002</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="#" class="text-primary hover:text-primary/80">详情</a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TRX-20250403-003</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-04-03</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                          理财
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2,500,000.00</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">CUST-0003</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="#" class="text-primary hover:text-primary/80">详情</a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TRX-20250404-004</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-04-04</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                          信用卡
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15,000.00</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">CUST-0004</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="#" class="text-primary hover:text-primary/80">详情</a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">TRX-20250405-005</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-04-05</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          存款
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">800,000.00</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">CUST-0005</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="#" class="text-primary hover:text-primary/80">详情</a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="mt-4 flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                  <a href="#" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    上一页
+                  </a>
+                  <a href="#" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    下一页
+                  </a>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p class="text-sm text-gray-700">
+                      显示 <span class="font-medium">1</span> 到 <span class="font-medium">5</span> 条，共 <span class="font-medium">125</span> 条记录
+                    </p>
+                  </div>
+                  <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">上一页</span>
+                        <i class="fa fa-chevron-left text-xs"></i>
+                      </a>
+                      <a href="#" aria-current="page" class="z-10 bg-primary border-primary text-white relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                        1
+                      </a>
+                      <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                        2
+                      </a>
+                      <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                        3
+                      </a>
+                      <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                        ...
+                      </span>
+                      <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                        25
+                      </a>
+                      <a href="#" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                        <span class="sr-only">下一页</span>
+                        <i class="fa fa-chevron-right text-xs"></i>
+                      </a>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧数据详情 -->
+            <div class="lg:w-1/3">
+              <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">数据概览</h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">总交易笔数</span>
+                    <span class="text-lg font-semibold text-gray-900">125</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">总交易金额</span>
+                    <span class="text-lg font-semibold text-gray-900">¥ 85,325,678.00</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">平均交易金额</span>
+                    <span class="text-lg font-semibold text-gray-900">¥ 682,605.42</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">最大交易金额</span>
+                    <span class="text-lg font-semibold text-gray-900">¥ 5,000,000.00</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">最小交易金额</span>
+                    <span class="text-lg font-semibold text-gray-900">¥ 12,500.00</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200 mb-4">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">交易类型分布</h3>
+                <div class="h-64">
+                  <canvas id="transactionTypeChart"></canvas>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-lg shadow-sm p-4 border border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">交易趋势</h3>
+                <div class="h-64">
+                  <canvas id="transactionTrendChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 历史记录 -->
+      <section id="history" class="space-y-6 hidden">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">历史记录</h1>
+            <p class="mt-1 text-gray-600">查看所有业务流程的执行历史</p>
+          </div>
+          <div class="mt-4 md:mt-0">
+            <button class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition duration-150 ease-in-out">
+              <i class="fa fa-filter mr-2"></i>
+              高级筛选
+            </button>
+          </div>
+        </div>
+
+        <!-- 历史记录列表 -->
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+            <div class="flex items-center">
+              <div class="relative mr-4">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fa fa-search text-gray-400"></i>
+                </div>
+                <input type="text" class="focus:ring-primary focus:border-primary block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm" placeholder="搜索历史记录...">
+              </div>
+              <div class="relative">
+                <select class="block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary focus:border-primary rounded-md bg-white">
+                  <option>所有业务</option>
+                  <option>银行业务季度报表</option>
+                  <option>信用卡风险评估月报</option>
+                  <option>证券交易日报</option>
+                  <option>外汇交易周报</option>
+                </select>
+              </div>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center space-x-2">
+              <div class="relative">
+                <select class="block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary focus:border-primary rounded-md bg-white">
+                  <option>所有状态</option>
+                  <option>成功</option>
+                  <option>失败</option>
+                  <option>处理中</option>
+                  <option>已暂停</option>
+                </select>
+              </div>
+              <div class="relative">
+                <input type="date" class="block pl-3 pr-3 py-2 text-sm border-gray-300 focus:outline-none focus:ring-primary focus:border-primary rounded-md bg-white">
+              </div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">业务名称</th>
+                  <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">执行时间</th>
+                  <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">触发方式</th>
+                  <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                  <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">耗时</th>
+                  <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 bg-blue-100 rounded-md flex items-center justify-center">
+                        <i class="fa fa-bank text-primary"></i>
+                      </div>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">银行业务季度报表</div>
+                        <div class="text-xs text-gray-500">Q2 2025</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-05-30 09:30:00</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">定时触发</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      成功
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5分12秒</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#history-detail" class="text-primary hover:text-primary/80 mr-3">详情</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">查看日志</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 bg-purple-100 rounded-md flex items-center justify-center">
+                        <i class="fa fa-credit-card text-purple-600"></i>
+                      </div>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">信用卡风险评估月报</div>
+                        <div class="text-xs text-gray-500">May 2025</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-06-01 14:15:30</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">定时触发</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                      处理中
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3分47秒</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#history-detail" class="text-primary hover:text-primary/80 mr-3">详情</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">查看日志</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 bg-red-100 rounded-md flex items-center justify-center">
+                        <i class="fa fa-line-chart text-danger"></i>
+                      </div>
+                      <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">证券交易日报</div>
+                        <div class="text-xs text-gray-500">June 01, 2025</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-06-01 18:45:12</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">定时触发</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                      失败
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1分22秒</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="#history-detail" class="text-primary hover:text-primary/80 mr-3">详情</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900">查看日志</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <div class="flex-shrink-0 h-8 w-8 bg-green-100 rounded-md flex items-center justify-center">
+                        <i class="fa fa-exchange text-green-600"></i>
+                      </div>
+                      <div class="ml-3">
+                        
