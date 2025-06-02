@@ -1,82 +1,74 @@
-import React from 'react';
-import { LaptopOutlined, NotificationOutlined, UserOutlined } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Breadcrumb, Layout, Menu, theme } from 'antd';
+import React, { useState } from 'react';
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import { Button, Layout, theme } from 'antd';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import MainMenu from './components/MainMenu';
 
-const { Header, Content, Sider } = Layout;
+const { Header, Sider, Content } = Layout;
 
-const headers: MenuProps['items'] = ['首页', '业务管理', '数据采集'].map((value, index) => ({
-  key: index,
-  label: value,
-}));
-
-const items2: MenuProps['items'] = [UserOutlined, LaptopOutlined, NotificationOutlined].map(
-  (icon, index) => {
-    const key = String(index + 1);
-
-    return {
-      key: `sub${key}`,
-      icon: React.createElement(icon),
-      label: `subnav ${key}`,
-      children: Array.from({ length: 4 }).map((_, j) => {
-        const subKey = index * 4 + j + 1;
-        return {
-          key: subKey,
-          label: `option${subKey}`,
-        };
-      }),
-    };
-  },
-);
-
-
-function App() {
+const AppContent: React.FC = () => {
+  const [collapsed, setCollapsed] = useState(false);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
   return (
-    <Layout>
-      <Header style={{ display: 'flex', alignItems: 'center' }}>
-        <div className="demo-logo" />
-        <Menu
-          theme="light"
-          mode="horizontal"
-          defaultSelectedKeys={['2']}
-          items={headers}
-          style={{ flex: 1, minWidth: 0 }}
+    <Layout style={{ height: '100vh' }}>
+      <Sider
+        trigger={null}
+        collapsible
+        collapsed={collapsed}
+        style={{
+          background: colorBgContainer
+        }}
+      >
+        <div style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: colorBgContainer }}>
+          <UserOutlined style={{ fontSize: '24px', color: '#1890ff', marginRight: '8px' }} />
+          {!collapsed && <span style={{ color: '#1890ff', fontSize: '16px' }}>Regularotry Report Platform</span>}
+        </div>
+        <MainMenu />
+      </Sider>
+      <Header style={{ padding: 0, background: colorBgContainer }}>
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={() => setCollapsed(!collapsed)}
+          style={{
+            fontSize: '16px',
+            width: 64,
+            height: 64,
+          }}
         />
       </Header>
-      <Layout>
-        <Sider width={200} style={{ background: colorBgContainer }}>
-          <Menu
-            mode="inline"
-            defaultSelectedKeys={['1']}
-            defaultOpenKeys={['sub1']}
-            style={{ height: '100%', borderRight: 0 }}
-            items={items2}
-          />
-        </Sider>
-        <Layout style={{ padding: '0 24px 24px' }}>
-          <Breadcrumb
-            items={[{ title: 'Home' }, { title: 'List' }, { title: 'App' }]}
-            style={{ margin: '16px 0' }}
-          />
-          <Content
-            style={{
-              padding: 24,
-              margin: 0,
-              minHeight: 280,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
-            }}
-          >
-            Content
-          </Content>
-        </Layout>
-      </Layout>
+      <Content
+        style={{
+          margin: '24px 16px',
+          padding: 24,
+          height: 'calc(100vh - 112px)',
+          background: colorBgContainer,
+          borderRadius: borderRadiusLG,
+        }}
+      >
+        <Routes>
+          <Route path="/overview" element={<div>Nav 1 内容区域</div>} />
+          <Route path="/all-insight" element={<div>Nav 2 内容区域</div>} />
+          <Route path="/page3" element={<div>Nav 3 内容区域</div>} />
+        </Routes>
+      </Content>
     </Layout>
   );
-}
+};
+
+const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  );
+};
 
 export default App;
