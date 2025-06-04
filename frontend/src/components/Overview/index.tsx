@@ -1,12 +1,14 @@
-import { Card, Col, List, Row, Space, theme } from 'antd';
+import { Card, Col, Divider, List, Row, Space, theme } from 'antd';
 import React, { useState } from 'react';
 import { Typography } from 'antd';
 import { Content } from 'antd/es/layout/layout';
-import { FileFilled } from '@ant-design/icons';
+import { ArrowUpOutlined, EyeOutlined, FileFilled } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
-function BriefCard({ icon, main, comment, trend }: { icon: any, main: any, comment: any, trend: any }) {
+function BriefCard({ icon, main, comment, trend }: {
+  icon?: any, main?: any, comment?: any, trend?: any
+}) {
   return (
     <Card
       variant='borderless'
@@ -14,6 +16,7 @@ function BriefCard({ icon, main, comment, trend }: { icon: any, main: any, comme
         margin: 0,
         padding: 0,
         width: "320px",
+        height: "100px"
       }}
       styles={{
         body: {
@@ -26,13 +29,25 @@ function BriefCard({ icon, main, comment, trend }: { icon: any, main: any, comme
         alignItems: 'center',
       }}>
         <Col style={{ margin: 0, padding: 0, alignContent: 'center' }}>
-          <div style={{ margin: 0, padding: 0, fontSize: '54px' }}>
+          <div style={{
+            margin: 0, padding: 0,
+            fontSize: '54px',
+            height: '54px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
             {icon}
           </div>
         </Col>
-        <Col style={{ margin: 0, padding: 0 }}>
+        <Col style={{ margin: 0, paddingLeft: 10, display: 'flex', flexDirection: 'column' }}>
           <Text type="secondary" style={{ margin: 0, padding: 0, fontSize: "15px" }}>{comment}</Text>
-          <Title level={1} style={{ margin: 0, padding: 0, fontSize: "36px" }}>{main}</Title>
+          <Text
+            style={{
+              margin: 0, padding: 0,
+              fontSize: "36px", height: "40px",
+              display: "flex", "alignItems": "center"
+            }}>
+            {main}
+          </Text>
         </Col>
       </Row>
       <Row style={{ margin: 0, padding: 0 }}>
@@ -49,20 +64,58 @@ const Overview: React.FC = () => {
 
   return (
     <Content>
+      <Divider orientation="left">
+        <Title level={4} style={{ margin: 0, padding: 0 }}>All Regulations</Title>
+      </Divider>
+
+      <Space direction="vertical" size="large" style={{ display: 'flex' }}>
+        <Row>
+          <Space direction="horizontal" size="middle" style={{ display: 'flex' }}>
+            <BriefCard
+              icon={<EyeOutlined />}
+              main="18"
+              comment="Obligations"
+            />
+            <BriefCard
+              icon={<FileFilled />}
+              main="168"
+              comment={<>Reports</>}
+              trend={<><ArrowUpOutlined />2 new</>}
+            />
+          </Space>
+        </Row>
+        <Row>
+          <Space direction="horizontal" size="middle" style={{ display: 'flex' }}>
+            <Card title='Country'>
+            </Card>
+
+            <Card title='Reports at Risk'>
+            </Card>
+          </Space>
+        </Row>
+      </Space>
+
+      <Divider orientation="left">
+        <Title level={4} style={{ margin: 0, padding: 0 }}>My Dashboard</Title>
+      </Divider>
       <Row>
         <Space direction="horizontal" size="middle" style={{ display: 'flex' }}>
 
           <BriefCard
-            icon={<FileFilled />}
+            icon={<EyeOutlined />}
             main="18"
-            comment="All Obligations"
-            trend="&uarr; 2 new (recent week)"
+            comment="Obligations"
           />
 
-          <BriefCard icon={<FileFilled />} main="168" comment={<>Delivered Reports(recent week)</>} trend="&uarr; 2 new" />
+          <BriefCard
+            icon={<FileFilled />}
+            main="168"
+            comment={<>Reports</>}
+            trend={<><ArrowUpOutlined />2 new</>}
+          />
         </Space>
       </Row>
-      
+
     </Content >
   )
 }
