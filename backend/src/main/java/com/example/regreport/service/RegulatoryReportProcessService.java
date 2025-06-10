@@ -9,13 +9,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 
 @Service
 @Transactional
 public class RegulatoryReportProcessService {
     private final RegulatoryReportProcessRepository processRepository;
     private final TaskScheduler taskScheduler;
-    private final Map<Long, Runnable> scheduledTasks = new ConcurrentHashMap<>();
+    private final Map<Long, Future<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     public RegulatoryReportProcessService(RegulatoryReportProcessRepository processRepository,
                                           TaskScheduler taskScheduler) {
@@ -40,7 +41,7 @@ public class RegulatoryReportProcessService {
     private void scheduleProcessExecution(RegulatoryReportProcess process) {
         Runnable task = () -> executeProcess(process);
         CronTrigger trigger = new CronTrigger(process.getCronExpression());
-        Runnable scheduledTask = taskScheduler.schedule(task, trigger);
+        Future<?> scheduledTask = taskScheduler.schedule(task, trigger);
         scheduledTasks.put(process.getId(), scheduledTask);
     }
 

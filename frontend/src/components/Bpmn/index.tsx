@@ -1,15 +1,10 @@
-import React, { useState } from 'react';
-import {
-  UserOutlined,
-} from '@ant-design/icons';
-import { Layout, theme } from 'antd';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import MainMenu from './components/MainMenu';
-import Overview from './components/Overview';
-import OverviewHeader from './components/Overview/Header';
-import BpmnEditor from './components/Bpmn';
-import BpmnModelerWithPanel from './components/Bpmn/BpmnModelerWithPanel';
-const { Header, Sider, Content } = Layout;
+import React, { useEffect, useRef } from 'react';
+import BpmnJS from 'bpmn-js/lib/Modeler';
+
+import 'bpmn-js/dist/assets/diagram-js.css';
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
+
+
 const initialDiagram = `
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:bpsim="http://www.bpsim.org/schemas/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:drools="http://www.jboss.org/drools" xmlns:xsi="xsi" id="_CQXNICd2ED6DNYCB971v9Q" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd http://www.jboss.org/drools drools.xsd http://www.bpsim.org/schemas/1.0 bpsim.xsd http://www.omg.org/spec/DD/20100524/DC DC.xsd http://www.omg.org/spec/DD/20100524/DI DI.xsd " exporter="jBPM Process Modeler" exporterVersion="2.0" targetNamespace="http://www.omg.org/bpmn20">
@@ -102,65 +97,72 @@ const initialDiagram = `
   </bpmn2:relationship>
 </bpmn2:definitions>
 `;
-const AppContent: React.FC = () => {
-  const {
-    token: { colorBgContainer, borderRadiusLG },
-  } = theme.useToken();
 
-  return (
-    <Layout style={{ height: '100vh' }}>
-      <Header style={{ padding: 0, display: 'flex', alignItems: 'auto', backgroundColor: colorBgContainer }}>
-        <div style={{ padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: colorBgContainer }}>
-          <UserOutlined style={{ fontSize: '24px', color: '#1890ff', marginRight: '8px' }} />
-          <span style={{ color: '#1890ff', fontSize: '16px' }}>Regulatory Report Platform</span>
+const BpmnEditor = ({ initXml }: { initXml?: string }) => {
+    const effectInit = useRef(false);
+    const containerRef = useRef(null);
+    const bpmnModelerRef = useRef<BpmnJS>(null);
+
+    useEffect(() => {
+        // if (effectInit.current) return; // 防止重复初始化
+        // effectInit.current = true; // 标记已初始化
+
+        if (!containerRef.current) return;
+
+        // let isMounted = true;
+
+        // 初始化模型器
+        console.log('aaa....')
+        bpmnModelerRef.current = new BpmnJS({
+            container: containerRef?.current!
+        });
+
+        console.log('bbb....')
+        // 导入默认图
+        bpmnModelerRef.current.importXML(initXml ?? initialDiagram)
+            .then(() => {
+                console.log('加载 BPMN XML 成功');
+                // if (!isMounted) {
+                //     return;
+                // }
+            })
+            .catch((err: any) => {
+                console.error('加载 BPMN XML 失败:', err);
+            });
+        console.log('ccc....')
+
+        // 清理
+        return () => {
+            // isMounted = false;
+            try {
+                console.log('destroying....')
+                bpmnModelerRef?.current?.destroy();
+            } catch (err) {
+                console.error('销毁 BPMN 模型器失败:', err);
+            }
+            // bpmnModelerRef.current = null;
+        };
+    }, [initXml]);
+
+    // 导出 BPMN XML
+    const handleSave = async () => {
+        try {
+            const { xml } = await bpmnModelerRef?.current?.saveXML({ format: true })!;
+            console.log('导出的 XML:', xml);
+            alert('XML 导出成功，查看控制台。');
+        } catch (err) {
+            console.error('导出失败:', err);
+        }
+    };
+
+    return (
+        <div>
+            <div style={{ height: '500px', border: '1px solid #ccc' }} ref={containerRef}></div>
+            <button onClick={handleSave} style={{ marginTop: '10px' }}>
+                导出 BPMN XML
+            </button>
         </div>
-        <Routes>
-          <Route path="/overview" element={<OverviewHeader />} />
-          <Route path="/access-mgmt" element={<div>Nav 2 内容区域</div>} />
-          <Route path="/bpmn-editor" element={<>BPMN</>} />
-        </Routes>
-      </Header>
-
-      <Layout>
-
-        <Sider
-          trigger={null}
-          style={{
-            background: colorBgContainer
-          }}
-        >
-          <div style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
-            <MainMenu />
-          </div>
-        </Sider>
-
-        <Content
-          style={{
-            margin: '24px 16px',
-            padding: 24,
-            height: 'calc(100vh - 112px)',
-            overflowY: 'auto',
-          }}
-        >
-          <Routes>
-            <Route path="/overview" element={<Overview />} />
-            <Route path="/access-mgmt" element={<div>access management</div>} />
-            <Route path="/bpmn-editor" element={<BpmnModelerWithPanel xml={initialDiagram} />} />
-            {/* <Route path="/bpmn-editor" element={<BpmnEditor initXml={initialDiagram} />} /> */}
-
-          </Routes>
-        </Content>
-      </Layout>
-    </Layout>
-  );
+    );
 };
 
-const App: React.FC = () => {
-  return (
-    <BrowserRouter>
-      <AppContent />
-    </BrowserRouter>
-  );
-};
-
-export default App;
+export default BpmnEditor;

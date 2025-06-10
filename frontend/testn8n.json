@@ -1,0 +1,207 @@
+{
+    "nodes": [
+        {
+            "parameters": {},
+            "id": "Start",
+            "name": "Start",
+            "type": "n8n-nodes-base.start",
+            "typeVersion": 1,
+            "position": [
+                200,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "GET",
+                "path": "manual-approval",
+                "responseMode": "onReceived",
+                "responseData": "Custom",
+                "responseBody": "Approval received"
+            },
+            "id": "WebhookManualApproval",
+            "name": "Webhook Manual Approval",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                200,
+                100
+            ]
+        },
+        {
+            "parameters": {
+                "amount": 6,
+                "unit": "hours"
+            },
+            "id": "Wait6Hours",
+            "name": "Wait 6 Hours",
+            "type": "n8n-nodes-base.wait",
+            "typeVersion": 1,
+            "position": [
+                200,
+                500
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "waitAny"
+            },
+            "id": "MergeWaitAny",
+            "name": "Merge Wait Any",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 1,
+            "position": [
+                400,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{$json[\"headers\"]}}",
+                            "operation": "isNotEmpty"
+                        }
+                    ]
+                }
+            },
+            "id": "IFManualOrTimeout",
+            "name": "IF Manual or Timeout",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                600,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "fromEmail": "your@email.com",
+                "toEmail": "recipient@email.com",
+                "subject": "Approval Timeout",
+                "text": "{{$json.approverName}} did not respond in time. Automatically skipping."
+            },
+            "id": "SendTimeoutEmail",
+            "name": "Send Timeout Email",
+            "type": "n8n-nodes-base.emailSend",
+            "typeVersion": 1,
+            "position": [
+                800,
+                400
+            ],
+            "credentials": {
+                "smtp": {
+                    "id": "your-smtp-credential-id"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "functionCode": "return [{ json: { status: 'approved' } }];"
+            },
+            "id": "ReturnApproved",
+            "name": "Return Approved",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                800,
+                200
+            ]
+        },
+        {
+            "parameters": {
+                "functionCode": "return [{ json: { status: 'timeout' } }];"
+            },
+            "id": "ReturnTimeout",
+            "name": "Return Timeout",
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                1000,
+                400
+            ]
+        }
+    ],
+    "connections": {
+        "Start": {
+            "main": [
+                [
+                    {
+                        "node": "Webhook Manual Approval",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Wait 6 Hours",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Webhook Manual Approval": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Wait Any",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Wait 6 Hours": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Wait Any",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Merge Wait Any": {
+            "main": [
+                [
+                    {
+                        "node": "IF Manual or Timeout",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "IF Manual or Timeout": {
+            "main": [
+                [
+                    {
+                        "node": "Return Approved",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Send Timeout Email",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Send Timeout Email": {
+            "main": [
+                [
+                    {
+                        "node": "Return Timeout",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false
+}
