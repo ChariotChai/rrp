@@ -1,0 +1,113 @@
+package com.example.graphql;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.*;
+
+import java.io.IOException;
+import java.util.*;
+
+public class GraphQLQueryGenerator {
+
+    private static final String INTROSPECTION_QUERY = "{ __schema { types { name kind fields { name args { name type { name kind ofType { name kind } } } type { name kind ofType { name kind name } } } } } }";
+
+    public static void main(String[] args) throws IOException {
+        String endpoint = "http://your-graphql-endpoint"; // ← 替换为你的 GraphQL 地址
+        OkHttpClient client = new OkHttpClient();
+
+        RequestBody body = RequestBody.create(
+                "{\"query\": \"" + INTROSPECTION_QUERY.replace("\"", "\\\"") + "\"}",
+                MediaType.get("application/json")
+        );
+
+        Request request = new Request.Builder()
+                .url(endpoint)
+                .post(body)
+                .build();
+
+        Response response = client.newCall(request).execute();
+        String json = response.body().string();
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(json);
+        JsonNode types = root.path("data").path("__schema").path("types");
+
+        GraphQLQueryGenerator generator = new GraphQLQueryGenerator();
+        String query = generator.buildQuery(types);
+        System.out.println("Generated Query:");
+        System.out.println(query);
+    }
+
+    public String buildQuery(JsonNode types) {
+        JsonNode queryType = findType(types, "Query");
+        Map<String, String> variables = new LinkedHashMap<>();
+
+        StringBuilder queryBuilder = new StringBuilder();
+        String selectionSet = buildFieldSelection(types, queryType, variables);
+
+        String variableDefs = variables.entrySet().stream()
+                .map(e -> "$" + e.getKey() + ": " + e.getValue())
+                .reduce((a, b) -> a + ", " + b)
+                .orElse("");
+
+        queryBuilder.append("query AutoQuery(").append(variableDefs).append(") {\n");
+        queryBuilder.append(selectionSet);
+        queryBuilder.append("}");
+
+        return queryBuilder.toString();
+    }
+
+    private String buildFieldSelection(JsonNode allTypes, JsonNode typeNode, Map<String, String> variables) {
+        StringBuilder sb = new StringBuilder();
+
+        for (JsonNode field : typeNode.path("fields")) {
+            String name = field.path("name").asText();
+            sb.append("  ").append(name);
+
+            JsonNode args = field.path("args");
+            if (args.isArray() && args.size() > 0) {
+                sb.append("(");
+                List<String> argStrings = new ArrayList<>();
+                for (JsonNode arg : args) {
+                    String argName = arg.path("name").asText();
+                    String typeName = resolveTypeName(arg.path("type"));
+                    variables.putIfAbsent(argName, typeName);
+                    argStrings.add(argName + ": $" + argName);
+                }
+                sb.append(String.join(", ", argStrings)).append(")");
+            }
+
+            String fieldTypeName = resolveTypeName(field.path("type"));
+            JsonNode fieldTypeNode = findType(allTypes, fieldTypeName);
+            if (hasFields(fieldTypeNode)) {
+                sb.append(" {\n");
+                sb.append(buildFieldSelection(allTypes, fieldTypeNode, variables));
+                sb.append("  }");
+            }
+
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+
+    private String resolveTypeName(JsonNode typeNode) {
+        while (typeNode.has("ofType") && !typeNode.path("ofType").isNull()) {
+            typeNode = typeNode.path("ofType");
+        }
+        return typeNode.path("name").asText();
+    }
+
+    private boolean hasFields(JsonNode typeNode) {
+        return typeNode != null && typeNode.has("fields");
+    }
+
+    private JsonNode findType(JsonNode types, String name) {
+        for (JsonNode t : types) {
+            if (t.path("name").asText().equals(name)) {
+                return t;
+            }
+        }
+        return null;
+    }
+}
