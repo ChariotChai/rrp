@@ -1,0 +1,260 @@
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import graphql.schema.idl.SchemaParser;
+import graphql.schema.idl.TypeDefinitionRegistry;
+
+import java.io.IOException;
+import java.util.*;
+
+public class GraphQLQueryGenerator {
+
+    private static final String INTROSPECTION_QUERY = """
+        query IntrospectionQuery {
+          __schema {
+            queryType { name }
+            mutationType { name }
+            subscriptionType { name }
+            types {
+              ...FullType
+            }
+          }
+        }
+        
+        fragment FullType on __Type {
+          kind
+          name
+          description
+          fields(includeDeprecated: true) {
+            name
+            description
+            args {
+              ...InputValue
+            }
+            type {
+              ...TypeRef
+            }
+            isDeprecated
+            deprecationReason
+          }
+          inputFields {
+            ...InputValue
+          }
+          interfaces {
+            ...TypeRef
+          }
+          enumValues(includeDeprecated: true) {
+            name
+            description
+            isDeprecated
+            deprecationReason
+          }
+          possibleTypes {
+            ...TypeRef
+          }
+        }
+        
+        fragment InputValue on __InputValue {
+          name
+          description
+          type { ...TypeRef }
+          defaultValue
+        }
+        
+        fragment TypeRef on __Type {
+          kind
+          name
+          ofType {
+            kind
+            name
+            ofType {
+              kind
+              name
+              ofType {
+                kind
+                name
+                ofType {
+                  kind
+                  name
+                  ofType {
+                    kind
+                    name
+                    ofType {
+                      kind
+                      name
+                      ofType {
+                        kind
+                        name
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    private final String graphqlEndpoint;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public GraphQLQueryGenerator(String graphqlEndpoint) {
+        this.graphqlEndpoint = graphqlEndpoint;
+    }
+
+    // 执行GraphQL查询
+    public JsonNode executeGraphQLQuery(String query) throws IOException {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            HttpPost httpPost = new HttpPost(graphqlEndpoint);
+            httpPost.setHeader("Content-Type", "application/json");
+
+            ObjectNode requestBody = objectMapper.createObjectNode();
+            requestBody.put("query", query);
+
+            httpPost.setEntity(new StringEntity(requestBody.toString()));
+
+            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+                HttpEntity entity = response.getEntity();
+                String responseString = EntityUtils.toString(entity);
+                return objectMapper.readTree(responseString);
+            }
+        }
+    }
+
+    // 获取内省Schema
+    public JsonNode getIntrospectionSchema() throws IOException {
+        return executeGraphQLQuery(INTROSPECTION_QUERY);
+    }
+
+    // 生成完整查询
+    public String generateCompleteQuery(String rootType, int maxDepth) throws IOException {
+        JsonNode schema = getIntrospectionSchema();
+        JsonNode types = schema.path("data").path("__schema").path("types");
+
+        Map<String, JsonNode> typeMap = new HashMap<>();
+        for (JsonNode typeNode : types) {
+            String typeName = typeNode.path("name").asText();
+            typeMap.put(typeName, typeNode);
+        }
+
+        return generateFieldsForType(rootType, typeMap, maxDepth, 0, new HashSet<>());
+    }
+
+    // 递归生成字段
+    private String generateFieldsForType(String typeName, Map<String, JsonNode> typeMap, 
+                                       int maxDepth, int currentDepth, Set<String> visitedTypes) {
+        if (currentDepth >= maxDepth || visitedTypes.contains(typeName)) {
+            return "";
+        }
+
+        visitedTypes.add(typeName);
+        JsonNode typeNode = typeMap.get(typeName);
+        if (typeNode == null) {
+            return "";
+        }
+
+        JsonNode fields = typeNode.path("fields");
+        if (fields.isMissingNode() || !fields.isArray()) {
+            return "";
+        }
+
+        StringBuilder queryBuilder = new StringBuilder();
+        for (JsonNode field : fields) {
+            String fieldName = field.path("name").asText();
+            JsonNode fieldType = field.path("type");
+            String actualTypeName = resolveTypeName(fieldType);
+
+            // 处理参数
+            JsonNode args = field.path("args");
+            if (args.size() > 0) {
+                queryBuilder.append(fieldName).append("(");
+                List<String> argStrings = new ArrayList<>();
+                for (JsonNode arg : args) {
+                    String argName = arg.path("name").asText();
+                    String argType = resolveTypeName(arg.path("type"));
+                    argStrings.add(String.format("$%s: %s", argName, argType));
+                }
+                queryBuilder.append(String.join(", ", argStrings)).append(") ");
+            } else {
+                queryBuilder.append(fieldName);
+            }
+
+            // 递归处理子字段
+            if (!isScalarType(actualTypeName) && currentDepth < maxDepth - 1) {
+                String subQuery = generateFieldsForType(actualTypeName, typeMap, maxDepth, currentDepth + 1, visitedTypes);
+                if (!subQuery.isEmpty()) {
+                    queryBuilder.append(" { ").append(subQuery).append(" }");
+                }
+            }
+            queryBuilder.append("\n");
+        }
+
+        return queryBuilder.toString();
+    }
+
+    // 解析类型名称
+    private String resolveTypeName(JsonNode typeNode) {
+        JsonNode current = typeNode;
+        while (current.has("ofType")) {
+            current = current.path("ofType");
+        }
+        return current.path("name").asText();
+    }
+
+    // 判断是否是标量类型
+    private boolean isScalarType(String typeName) {
+        return typeName == null || 
+               typeName.equals("Int") || 
+               typeName.equals("Float") || 
+               typeName.equals("String") || 
+               typeName.equals("Boolean") || 
+               typeName.equals("ID");
+    }
+
+    // 提取查询中的所有参数
+    public Map<String, String> extractQueryParameters(String query) {
+        Map<String, String> parameters = new HashMap<>();
+        String[] lines = query.split("\n");
+        
+        for (String line : lines) {
+            if (line.contains("(") && line.contains(":")) {
+                String paramPart = line.substring(line.indexOf("(") + 1, line.indexOf(")"));
+                String[] params = paramPart.split(",");
+                
+                for (String param : params) {
+                    param = param.trim();
+                    if (param.startsWith("$")) {
+                        String[] parts = param.split(":");
+                        if (parts.length == 2) {
+                            parameters.put(parts[0].substring(1), parts[1].trim());
+                        }
+                    }
+                }
+            }
+        }
+        
+        return parameters;
+    }
+
+    public static void main(String[] args) throws IOException {
+        String endpoint = "https://your-graphql-endpoint.com/graphql";
+        GraphQLQueryGenerator generator = new GraphQLQueryGenerator(endpoint);
+
+        // 生成查询 (从Query类型开始，最大深度3层)
+        String completeQuery = generator.generateCompleteQuery("Query", 3);
+        System.out.println("Generated Complete Query:");
+        System.out.println(completeQuery);
+
+        // 提取参数
+        Map<String, String> parameters = generator.extractQueryParameters(completeQuery);
+        System.out.println("\nExtracted Parameters:");
+        parameters.forEach((name, type) -> System.out.println(name + ": " + type));
+    }
+}
