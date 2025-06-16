@@ -7,101 +7,10 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainMenu from './components/MainMenu';
 import Overview from './components/Overview';
 import OverviewHeader from './components/Overview/Header';
-import BpmnEditor from './components/Bpmn';
-import BpmnModelerWithPanel from './components/Bpmn/BpmnModelerWithPanel';
+import { ReactDemo } from './components/Flow/react-demo';
+import { Editor } from './components/Flow/editor';
 const { Header, Sider, Content } = Layout;
-const initialDiagram = `
-<?xml version="1.0" encoding="UTF-8"?>
-<bpmn2:definitions xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:bpsim="http://www.bpsim.org/schemas/1.0" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:drools="http://www.jboss.org/drools" xmlns:xsi="xsi" id="_CQXNICd2ED6DNYCB971v9Q" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL BPMN20.xsd http://www.jboss.org/drools drools.xsd http://www.bpsim.org/schemas/1.0 bpsim.xsd http://www.omg.org/spec/DD/20100524/DC DC.xsd http://www.omg.org/spec/DD/20100524/DI DI.xsd " exporter="jBPM Process Modeler" exporterVersion="2.0" targetNamespace="http://www.omg.org/bpmn20">
-  <bpmn2:collaboration id="_21916F47-8C83-401E-9339-84E1F91B1B47" name="Default Collaboration">
-    <bpmn2:participant id="_D6E60144-398B-4FA8-A4A5-568F011B1C4D" name="Pool Participant" processRef="test1"/>
-  </bpmn2:collaboration>
-  <bpmn2:process id="test1" drools:packageName="com.example" drools:version="1.0" drools:adHoc="false" name="test1" isExecutable="true" processType="Public">
-    <bpmn2:sequenceFlow id="_8D4BF8FC-4705-4E85-A8F1-67D7664A179E" sourceRef="_506AB281-F7E4-450D-87E2-C3416BCA2868" targetRef="_90975D69-57E9-42B3-841A-B1F7542CBED8"/>
-    <bpmn2:sequenceFlow id="_89F89CF8-E00E-4763-BC1D-08A18303F18F" sourceRef="_98F1E296-B1F1-4234-92C0-4202F832CA04" targetRef="_506AB281-F7E4-450D-87E2-C3416BCA2868">
-      <bpmn2:extensionElements>
-        <drools:metaData name="isAutoConnection.target">
-          <drools:metaValue><![CDATA[true]]></drools:metaValue>
-        </drools:metaData>
-      </bpmn2:extensionElements>
-    </bpmn2:sequenceFlow>
-    <bpmn2:endEvent id="_90975D69-57E9-42B3-841A-B1F7542CBED8">
-      <bpmn2:incoming>_8D4BF8FC-4705-4E85-A8F1-67D7664A179E</bpmn2:incoming>
-    </bpmn2:endEvent>
-    <bpmn2:task id="_506AB281-F7E4-450D-87E2-C3416BCA2868" name="Task">
-      <bpmn2:extensionElements>
-        <drools:metaData name="elementname">
-          <drools:metaValue><![CDATA[Task]]></drools:metaValue>
-        </drools:metaData>
-      </bpmn2:extensionElements>
-      <bpmn2:incoming>_89F89CF8-E00E-4763-BC1D-08A18303F18F</bpmn2:incoming>
-      <bpmn2:outgoing>_8D4BF8FC-4705-4E85-A8F1-67D7664A179E</bpmn2:outgoing>
-    </bpmn2:task>
-    <bpmn2:startEvent id="_98F1E296-B1F1-4234-92C0-4202F832CA04">
-      <bpmn2:outgoing>_89F89CF8-E00E-4763-BC1D-08A18303F18F</bpmn2:outgoing>
-    </bpmn2:startEvent>
-  </bpmn2:process>
-  <bpmndi:BPMNDiagram>
-    <bpmndi:BPMNPlane bpmnElement="test1">
-      <bpmndi:BPMNShape id="shape__98F1E296-B1F1-4234-92C0-4202F832CA04" bpmnElement="_98F1E296-B1F1-4234-92C0-4202F832CA04">
-        <dc:Bounds height="56" width="56" x="136" y="154"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="shape__506AB281-F7E4-450D-87E2-C3416BCA2868" bpmnElement="_506AB281-F7E4-450D-87E2-C3416BCA2868">
-        <dc:Bounds height="102" width="154" x="315" y="131"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="shape__90975D69-57E9-42B3-841A-B1F7542CBED8" bpmnElement="_90975D69-57E9-42B3-841A-B1F7542CBED8">
-        <dc:Bounds height="56" width="56" x="549" y="154"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="edge_shape__98F1E296-B1F1-4234-92C0-4202F832CA04_to_shape__506AB281-F7E4-450D-87E2-C3416BCA2868" bpmnElement="_89F89CF8-E00E-4763-BC1D-08A18303F18F">
-        <di:waypoint x="164" y="182"/>
-        <di:waypoint x="315" y="182"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="edge_shape__506AB281-F7E4-450D-87E2-C3416BCA2868_to_shape__90975D69-57E9-42B3-841A-B1F7542CBED8" bpmnElement="_8D4BF8FC-4705-4E85-A8F1-67D7664A179E">
-        <di:waypoint x="392" y="182"/>
-        <di:waypoint x="577" y="182"/>
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-  <bpmn2:relationship type="BPSimData">
-    <bpmn2:extensionElements>
-      <bpsim:BPSimData>
-        <bpsim:Scenario id="default" name="Simulationscenario">
-          <bpsim:ScenarioParameters/>
-          <bpsim:ElementParameters elementRef="_98F1E296-B1F1-4234-92C0-4202F832CA04">
-            <bpsim:TimeParameters>
-              <bpsim:ProcessingTime>
-                <bpsim:NormalDistribution mean="0" standardDeviation="0"/>
-              </bpsim:ProcessingTime>
-            </bpsim:TimeParameters>
-          </bpsim:ElementParameters>
-          <bpsim:ElementParameters elementRef="_506AB281-F7E4-450D-87E2-C3416BCA2868">
-            <bpsim:TimeParameters>
-              <bpsim:ProcessingTime>
-                <bpsim:NormalDistribution mean="0" standardDeviation="0"/>
-              </bpsim:ProcessingTime>
-            </bpsim:TimeParameters>
-            <bpsim:ResourceParameters>
-              <bpsim:Availability>
-                <bpsim:FloatingParameter value="0"/>
-              </bpsim:Availability>
-              <bpsim:Quantity>
-                <bpsim:FloatingParameter value="0"/>
-              </bpsim:Quantity>
-            </bpsim:ResourceParameters>
-            <bpsim:CostParameters>
-              <bpsim:UnitCost>
-                <bpsim:FloatingParameter value="0"/>
-              </bpsim:UnitCost>
-            </bpsim:CostParameters>
-          </bpsim:ElementParameters>
-        </bpsim:Scenario>
-      </bpsim:BPSimData>
-    </bpmn2:extensionElements>
-    <bpmn2:source>_CQXNICd2ED6DNYCB971v9Q</bpmn2:source>
-    <bpmn2:target>_CQXNICd2ED6DNYCB971v9Q</bpmn2:target>
-  </bpmn2:relationship>
-</bpmn2:definitions>
-`;
+
 const AppContent: React.FC = () => {
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -117,7 +26,7 @@ const AppContent: React.FC = () => {
         <Routes>
           <Route path="/overview" element={<OverviewHeader />} />
           <Route path="/access-mgmt" element={<div>Nav 2 内容区域</div>} />
-          <Route path="/bpmn-editor" element={<>BPMN</>} />
+          <Route path="/process-editor" element={<>Process</>} />
         </Routes>
       </Header>
 
@@ -142,13 +51,16 @@ const AppContent: React.FC = () => {
             overflowY: 'auto',
           }}
         >
+
           <Routes>
             <Route path="/overview" element={<Overview />} />
-            <Route path="/access-mgmt" element={<div>access management</div>} />
-            <Route path="/bpmn-editor" element={<BpmnModelerWithPanel xml={initialDiagram} />} />
+            <Route path="/access-mgmt" element={'access management'} />
+            <Route path="/process-editor" element={<Editor />} />
             {/* <Route path="/bpmn-editor" element={<BpmnEditor initXml={initialDiagram} />} /> */}
 
           </Routes>
+
+          {/* <Editor /> */}
         </Content>
       </Layout>
     </Layout>

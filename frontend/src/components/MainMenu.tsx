@@ -45,7 +45,7 @@ const MainMenu: React.FC = () => {
         },
         {
           key: 'basic-new-obligation', icon: <UserOutlined />,
-          label: <Link to="/bpmn-editor">New Obligation</Link>,
+          label: <Link to="/process-editor">New Obligation</Link>,
         },
         {
           ...filteredObligations,
