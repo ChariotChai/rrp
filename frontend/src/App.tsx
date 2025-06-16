@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainMenu from './components/MainMenu';
 import Overview from './components/Overview';
 import OverviewHeader from './components/Overview/Header';
-import { ReactDemo } from './components/Flow/react-demo';
+import { Report } from './components/report';
 import { Editor } from './components/Flow/editor';
 const { Header, Sider, Content } = Layout;
 
@@ -56,7 +56,7 @@ const AppContent: React.FC = () => {
             <Route path="/overview" element={<Overview />} />
             <Route path="/access-mgmt" element={'access management'} />
             <Route path="/process-editor" element={<Editor />} />
-            {/* <Route path="/bpmn-editor" element={<BpmnEditor initXml={initialDiagram} />} /> */}
+            <Route path="/report-detail/:reportId" element={<Report />} />
 
           </Routes>
 

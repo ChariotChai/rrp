@@ -45,12 +45,38 @@ const MainMenu: React.FC = () => {
         },
         {
           key: 'basic-new-obligation', icon: <UserOutlined />,
-          label: <Link to="/process-editor">New Obligation</Link>,
+          label: <Link to="/process-editor">Onboard New</Link>,
         },
         {
-          ...filteredObligations,
-          type: 'group'
+          key: 'obligations',
+          label: 'Obligations',
+          type: 'group',
+          children: [
+            {
+              key: '5',
+              label: 'Obligation 1',
+              children: [
+                {
+                  key: '5-1',
+                  label: <Link to="/report-detail/rpt11">Report 1-1</Link>,
+                },
+                {
+                  key: '5-2',
+                  label: <Link to="/report-detail/rpt12">Report 1-2</Link>,
+                },
+              ]
+            },
+            {
+              key: '6',
+              label: 'Obligation 2',
+              children: []
+            },
+          ]
         }
+        // {
+        //   ...filteredObligations,
+        //   type: 'group'
+        // }
       ]}
     />
   );
