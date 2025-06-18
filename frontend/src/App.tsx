@@ -9,6 +9,7 @@ import Overview from './components/Overview';
 import OverviewHeader from './components/Overview/Header';
 import { Report } from './components/report';
 import { Editor } from './components/Flow/editor';
+import DeepSearch from './components/Overview/deep-search';
 const { Header, Sider, Content } = Layout;
 
 const AppContent: React.FC = () => {
@@ -24,7 +25,7 @@ const AppContent: React.FC = () => {
           <span style={{ color: '#1890ff', fontSize: '16px' }}>Regulatory Report Platform</span>
         </div>
         <Routes>
-          <Route path="/overview" element={<OverviewHeader />} />
+          <Route path="/overview/*" element={<OverviewHeader />} />
           <Route path="/access-mgmt" element={<div>Nav 2 内容区域</div>} />
           <Route path="/process-editor" element={<>Process</>} />
         </Routes>
@@ -54,6 +55,8 @@ const AppContent: React.FC = () => {
 
           <Routes>
             <Route path="/overview" element={<Overview />} />
+            <Route path="/overview/deepsearch" element={<DeepSearch />} />
+
             <Route path="/access-mgmt" element={'access management'} />
             <Route path="/process-editor" element={<Editor />} />
             <Route path="/report-detail/:reportId" element={<Report />} />
